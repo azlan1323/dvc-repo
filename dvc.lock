@@ -9,8 +9,8 @@ stages:
       size: 49522076
     - path: prepare.py
       hash: md5
-      md5: 4b5a33eef0cccca2eed13f63703acdff
-      size: 5826
+      md5: 8bbce009e0b52bdd77efa83fbaaada6b
+      size: 4534
     params:
       params.yaml:
         data.random_state: 42
@@ -32,8 +32,8 @@ stages:
       size: 3783896
     - path: train.py
       hash: md5
-      md5: b90ebc2c1476fc59e86d2f8627b54e46
-      size: 3014
+      md5: 7b83449808395ed7eff7216f36f57260
+      size: 2533
     params:
       params.yaml:
         data.random_state: 42
