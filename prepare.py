@@ -7,7 +7,7 @@ params = yaml.safe_load(open('params.yaml'))
 
 os.makedirs('data/processed', exist_ok=True)
 
-df = pd.read_csv('data/pakistan_house_prices.csv')
+df = pd.read_csv('data/zameen-updated.csv')
 
 le = LabelEncoder()
 df['location_encoded'] = le.fit_transform(df['location'])
