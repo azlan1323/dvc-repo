@@ -3,7 +3,7 @@ stages:
     cmd: python prepare.py
     deps:
       - prepare.py
-      - data/pakistan_house_prices.csv
+      - data/zameen-updated.csv
     params:
       - data.random_state
     outs:
