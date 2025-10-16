@@ -5,12 +5,12 @@ data:
 model:
   type: RandomForestRegressor
   n_estimators: 100
-  max_depth: 10
+  max_depth: 15
   min_samples_split: 5
   random_state: 42
 
 features:
-  - property_size
+  - area
   - bedrooms
-  - bathrooms
+  - baths
   - location_encoded

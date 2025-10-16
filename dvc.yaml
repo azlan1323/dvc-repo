@@ -8,6 +8,7 @@ stages:
       - data.random_state
     outs:
       - data/processed/processed_data.csv
+      - model/location_encoder.pkl
 
   train:
     cmd: python train.py
