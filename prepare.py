@@ -10,26 +10,27 @@ os.makedirs('data/processed', exist_ok=True)
 
 df = pd.read_csv('data/zameen-updated.csv')
 
-print(f"Dataset shape: {df.shape}")
+print(f"Initial dataset shape: {df.shape}")
 print(f"Columns: {df.columns.tolist()}")
-
-print(f"\nData types:")
-print(df[['price', 'area', 'bedrooms', 'baths']].dtypes)
-
-print(f"\nSample area values:")
-print(df['area'].head(10))
 
 def clean_area(area_val):
     """Extract numeric value from area string"""
     if pd.isna(area_val):
         return None
     
-    area_str = str(area_val)
+    area_str = str(area_val).strip()
     
     numbers = re.findall(r'\d+\.?\d*', area_str)
     
     if numbers:
-        return float(numbers[0])
+        value = float(numbers[0])
+        
+        if value < 50 and 'marla' in area_str.lower():
+            return value * 272
+        elif value < 10 and 'kanal' in area_str.lower():
+            return value * 5445
+        
+        return value
     return None
 
 df['area_clean'] = df['area'].apply(clean_area)
@@ -38,37 +39,70 @@ def clean_numeric(val):
     """Clean any numeric column"""
     if pd.isna(val):
         return None
-    try:
+    
+    if isinstance(val, (int, float)):
         return float(val)
-    except:
-        numbers = re.findall(r'\d+\.?\d*', str(val))
-        if numbers:
-            return float(numbers[0])
-        return None
+    
+    val_str = str(val).strip()
+    
+    val_str = val_str.replace(',', '')
+    
+    numbers = re.findall(r'\d+\.?\d*', val_str)
+    
+    if numbers:
+        base_value = float(numbers[0])
+        
+        if 'crore' in val_str.lower():
+            return base_value * 10000000
+        elif 'lakh' in val_str.lower():
+            return base_value * 100000
+        
+        return base_value
+    return None
 
 df['price_clean'] = df['price'].apply(clean_numeric)
 df['bedrooms_clean'] = df['bedrooms'].apply(clean_numeric)
 df['baths_clean'] = df['baths'].apply(clean_numeric)
 
-print(f"\n✅ Cleaned numeric columns")
-print(f"Sample cleaned area: {df['area_clean'].head(10).tolist()}")
+print(f"\nCleaned numeric columns")
 
 if 'purpose' in df.columns:
     df = df[df['purpose'] == 'For Sale'].copy()
     print(f"After filtering 'For Sale': {len(df)} records")
 
-df = df.dropna(subset=['price_clean', 'area_clean', 'bedrooms_clean', 'baths_clean', 'location'])
-print(f"After removing NaN: {len(df)} records")
+initial_count = len(df)
+df = df.dropna(subset=['price_clean', 'area_clean', 'location'])
+print(f"After removing NaN: {len(df)} records (removed {initial_count - len(df)})")
 
-df = df[(df['price_clean'] > 1000000) & (df['price_clean'] < 100000000)]
+initial_count = len(df)
+df = df[(df['price_clean'] > 500000) & (df['price_clean'] < 500000000)]
+print(f"After price filter: {len(df)} records (removed {initial_count - len(df)})")
 
-df = df[(df['area_clean'] > 100) & (df['area_clean'] < 10000)]
+initial_count = len(df)
+df = df[(df['area_clean'] > 50) & (df['area_clean'] < 20000)]
+print(f"After area filter: {len(df)} records (removed {initial_count - len(df)})")
 
-df = df[(df['bedrooms_clean'] >= 1) & (df['bedrooms_clean'] <= 10)]
+df['bedrooms_clean'] = df['bedrooms_clean'].fillna(df['bedrooms_clean'].median())
+df['baths_clean'] = df['baths_clean'].fillna(df['baths_clean'].median())
 
-df = df[(df['baths_clean'] >= 1) & (df['baths_clean'] <= 8)]
+df = df[(df['bedrooms_clean'] >= 0) & (df['bedrooms_clean'] <= 15)]
 
-print(f"After outlier removal: {len(df)} records")
+df = df[(df['baths_clean'] >= 0) & (df['baths_clean'] <= 10)]
+
+print(f"After bedroom/bath filter: {len(df)} records")
+
+if len(df) < 100:
+    print(f"\nWARNING: Only {len(df)} records remaining!")
+    print("This might not be enough for training. Consider:")
+    print("1. Relaxing filters further")
+    print("2. Checking data quality")
+    print("3. Using a different dataset")
+
+location_counts = df['location'].value_counts()
+valid_locations = location_counts[location_counts >= 5].index
+df = df[df['location'].isin(valid_locations)]
+
+print(f"After filtering rare locations: {len(df)} records")
 
 le = LabelEncoder()
 df['location_encoded'] = le.fit_transform(df['location'])
@@ -92,9 +126,16 @@ df_final = df_final.dropna()
 df_final.to_csv('data/processed/processed_data.csv', index=False)
 
 print(f"\nSuccessfully processed {len(df_final)} records")
-print(f"\nFeature statistics:")
-print(df_final.describe())
-print(f"\nPrice range: PKR {df_final['price'].min():,.0f} - PKR {df_final['price'].max():,.0f}")
-print(f"Area range: {df_final['area'].min():.0f} - {df_final['area'].max():.0f} sq ft")
-print(f"\nSample processed data:")
-print(df_final.head(10))
+
+if len(df_final) > 0:
+    print(f"\nFeature statistics:")
+    print(df_final.describe())
+    print(f"\nPrice range: PKR {df_final['price'].min():,.0f} - PKR {df_final['price'].max():,.0f}")
+    print(f"Area range: {df_final['area'].min():.0f} - {df_final['area'].max():.0f} sq ft")
+    print(f"Bedrooms range: {df_final['bedrooms'].min():.0f} - {df_final['bedrooms'].max():.0f}")
+    print(f"Baths range: {df_final['baths'].min():.0f} - {df_final['baths'].max():.0f}")
+    print(f"\nSample processed data:")
+    print(df_final.head(20))
+else:
+    print("\nERROR: No data remaining after filtering!")
+    print("Check your dataset and filtering logic.")

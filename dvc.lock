@@ -1,0 +1,53 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python prepare.py
+    deps:
+    - path: data/zameen-updated.csv
+      hash: md5
+      md5: 862ce971c086da8903e8ecc7c8a52c92
+      size: 49522076
+    - path: prepare.py
+      hash: md5
+      md5: 4b5a33eef0cccca2eed13f63703acdff
+      size: 5826
+    params:
+      params.yaml:
+        data.random_state: 42
+    outs:
+    - path: data/processed/processed_data.csv
+      hash: md5
+      md5: ff398cb07221cc009af7d066dfbb0ffe
+      size: 3783896
+    - path: model/location_encoder.pkl
+      hash: md5
+      md5: 1a0685ab3a8645e25b011e9bf0c87f26
+      size: 15853
+  train:
+    cmd: python train.py
+    deps:
+    - path: data/processed/processed_data.csv
+      hash: md5
+      md5: ff398cb07221cc009af7d066dfbb0ffe
+      size: 3783896
+    - path: train.py
+      hash: md5
+      md5: b90ebc2c1476fc59e86d2f8627b54e46
+      size: 3014
+    params:
+      params.yaml:
+        data.random_state: 42
+        data.test_size: 0.2
+        model.max_depth: 15
+        model.min_samples_split: 5
+        model.n_estimators: 100
+        model.random_state: 42
+    outs:
+    - path: metrics/metrics.json
+      hash: md5
+      md5: 5e3bb60d73848695cbb4d9006e21e304
+      size: 239
+    - path: model/model.pkl
+      hash: md5
+      md5: d5226b49f3a1a2271fe0ce368f0e28c6
+      size: 61940849
